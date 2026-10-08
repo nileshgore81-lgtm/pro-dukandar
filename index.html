@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Dukandar - Vyapari Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800&family=Noto+Sans+Devanagari:wght@600&display=swap" rel="stylesheet">
+<style>body{font-family:'Inter','Noto Sans Devanagari',sans-serif}</style>
+</head>
+<body class="bg-[#f6f7fb]">
+<div id="root" class="max-w-[480px] mx-auto bg-white min-h-screen shadow-xl">
+  <div id="lock" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-500 to-[#0f1a4d] p-6">
+    <div class="bg-white w-full rounded-[28px] p-8 text-center">
+      <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto text-3xl">🔒</div>
+      <h1 class="text-2xl font-extrabold mt-4">Pro Dukandar</h1>
+      <p class="text-sm text-gray-500 mt-1" id="lockText">नवीन PIN सेट करा</p>
+      <input id="pinInput" type="password" maxlength="4" placeholder="****" class="mt-6 w-full text-center text-3xl tracking-[14px] border-2 rounded-2xl py-3 outline-none focus:border-orange-500">
+      <button onclick="unlock()" class="mt-6 w-full bg-[#0f1a4d] text-white py-3 rounded-xl font-bold">Unlock App</button>
+      <p class="text-[11px] text-gray-400 mt-4">Total 6 • Lucky for Business</p>
+    </div>
+  </div>
+  <div id="app" class="hidden pb-20">
+    <div class="bg-[#0f1a4d] text-white p-5 rounded-b-[28px]">
+      <div class="flex justify-between items-center">
+        <div><h1 class="font-extrabold text-lg">Pro Dukandar</h1><p class="text-[11px] opacity-70">Vyapari Pro • Premium Ready</p></div>
+        <span class="bg-orange-500 text-[11px] font-bold px-3 py-1 rounded-full">👑 PREMIUM ₹99</span>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mt-6">
+        <div class="bg-white/10 rounded-2xl p-4"><p class="text-[11px] opacity-70">आजची विक्री</p><p class="text-2xl font-bold" id="todaySale">₹0</p></div>
+        <div class="bg-white text-[#0f1a4d] rounded-2xl p-4"><p class="text-[11px] opacity-70">एकूण विक्री</p><p class="text-2xl font-bold" id="totalSale">₹0</p></div>
+      </div>
+    </div>
+    <div class="p-4">
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="openSale()" class="bg-orange-50 border border-orange-100 p-4 rounded-2xl text-left"><p class="text-2xl">₹</p><p class="font-bold">विक्री करा</p><p class="text-xs text-gray-500">New Bill</p></button>
+        <button class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl text-left"><p class="text-2xl">📦</p><p class="font-bold">स्टॉक</p><p class="text-xs text-gray-500" id="stockCount">0 Items</p></button>
+      </div>
+      <h3 class="font-bold mt-6">विक्री जोडा</h3>
+      <div class="mt-3 space-y-3 bg-gray-50 p-4 rounded-2xl">
+        <input id="itemName" placeholder="मालाचे नाव" class="w-full border p-3 rounded-xl">
+        <input id="itemAmt" type="number" placeholder="रक्कम ₹" class="w-full border p-3 rounded-xl">
+        <input id="custName" placeholder="ग्राहक नाव" class="w-full border p-3 rounded-xl">
+        <button onclick="addSale()" class="w-full bg-[#0f1a4d] text-white py-3 rounded-xl font-bold">+ विक्री Add करा</button>
+      </div>
+      <h3 class="font-bold mt-6">आजच्या विक्री</h3>
+      <div id="saleList" class="mt-3 space-y-2"></div>
+      <div class="mt-6 bg-gradient-to-r from-orange-500 to-[#0f1a4d] rounded-2xl p-4 text-white"><p class="font-bold">Premium घ्या, Cloud Backup मिळवा</p><p class="text-xs opacity-80">₹99/महिना • WhatsApp Bill • No Ads</p></div>
+    </div>
+  </div>
+</div>
+<script>
+let sales = JSON.parse(localStorage.getItem('pd_sales')||'[]');
+let pin = localStorage.getItem('pd_pin');
+function init(){ if(pin) document.getElementById('lockText').innerText='PIN टाका'; update(); }
+function unlock(){ let v=document.getElementById('pinInput').value; if(!pin){ if(v.length<4) return alert('4 अंकी PIN टाका'); localStorage.setItem('pd_pin',v); pin=v; showApp(); } else { if(v===pin) showApp(); else alert('चुकीचा PIN'); } }
+function showApp(){ document.getElementById('lock').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); update(); }
+function addSale(){ let item=document.getElementById('itemName').value; let amt=document.getElementById('itemAmt').value; let cust=document.getElementById('custName').value; if(!item||!amt) return alert('माल आणि रक्कम टाका'); sales.push({item,amount:amt,customer:cust||'General',date:new Date().toLocaleDateString()}); localStorage.setItem('pd_sales',JSON.stringify(sales)); document.getElementById('itemName').value=''; document.getElementById('itemAmt').value=''; document.getElementById('custName').value=''; update(); }
+function update(){ let total=sales.reduce((a,b)=>a+Number(b.amount),0); let today=sales.filter(s=>s.date===new Date().toLocaleDateString()).reduce((a,b)=>a+Number(b.amount),0); document.getElementById('totalSale').innerText='₹'+total; document.getElementById('todaySale').innerText='₹'+today; let list=document.getElementById('saleList'); list.innerHTML=''; sales.slice(-10).reverse().forEach(s=>{ list.innerHTML+=`<div class="flex justify-between bg-white border p-3 rounded-xl"><div><p class="font-bold text-sm">${s.item}</p><p class="text-xs text-gray-500">${s.customer} • ${s.date}</p></div><p class="font-bold">₹${s.amount}</p></div>`}); if(sales.length===0) list.innerHTML='<p class="text-center text-gray-400 text-sm py-6">अजून विक्री नाही</p>'; }
+function openSale(){ window.scrollTo(0,300); }
+init(); if(!pin){} else if(localStorage.getItem('pd_logged')) showApp();
+</script>
+</body>
+</html>
