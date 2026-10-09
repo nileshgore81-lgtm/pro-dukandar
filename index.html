@@ -1,95 +1,59 @@
 <!DOCTYPE html>
 <html lang="mr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pro Dukandar v3 - GST Support</title>
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiUHJvIER1a2FuZGFyIHYzIiwiZGlzcGxheSI6InN0YW5kYWxvbmUifQ==">
-<meta name="theme-color" content="#0f1a4d">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Dukandar v4 - Jobs + Cloud</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-<div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-xl">
+<div class="max-w-md mx-auto bg-white min-h-screen shadow-xl">
   <div class="bg-[#0f1a4d] text-white p-4 sticky top-0 z-50">
-    <h1 class="text-xl font-bold">🏪 Pro Dukandar v3 <span class="text-xs bg-orange-500 px-2 py-1 rounded ml-2">GST</span></h1>
-    <div id="shopInfo" class="text-xs opacity-80 mt-1"></div>
+    <h1 class="font-bold text-lg">🏪 Pro Dukandar v4 <span class="bg-orange-500 text-[10px] px-2 py-1 rounded ml-2">JOBS+GST+CLOUD</span></h1>
+    <div id="shopInfo" class="text-[11px] opacity-80 mt-1"></div>
   </div>
-  <div id="loginPage" class="p-6">
-    <h2 class="text-2xl font-bold mb-2">नमस्कार, दुकानदार! 🙏</h2>
-    <p class="text-sm text-gray-500 mb-6">पहिल्यांदा दुकानाची माहिती भरा</p>
+  <div id="rolePage" class="p-8 text-center">
+    <h2 class="text-2xl font-bold mb-6">तुम्ही कोण आहात?</h2>
+    <button onclick="setRole('owner')" class="w-full bg-[#0f1a4d] text-white py-5 rounded-2xl font-bold text-lg mb-4">👑 मी मालक आहे<br><span class="text-xs font-normal opacity-70">दुकान चालवतो</span></button>
+    <button onclick="setRole('employee')" class="w-full bg-orange-500 text-white py-5 rounded-2xl font-bold text-lg">👷 मी कर्मचारी आहे<br><span class="text-xs font-normal opacity-80">नोकरी शोधतोय</span></button>
+  </div>
+  <div id="ownerSetup" class="hidden p-6">
+    <h2 class="font-bold text-xl mb-4">मालक - दुकान सेटअप</h2>
     <div class="space-y-3">
-      <input id="shopName" placeholder="दुकानाचे नाव *" class="w-full border p-3 rounded-xl">
+      <input id="shopName" placeholder="दुकान नाव *" class="w-full border p-3 rounded-xl">
       <input id="shopAddr" placeholder="पत्ता + Pincode *" class="w-full border p-3 rounded-xl">
-      <input id="shopMobile" placeholder="मोबाइल नंबर *" class="w-full border p-3 rounded-xl" type="tel">
-      <input id="shopGSTIN" placeholder="GSTIN No (असेल तर)" class="w-full border p-3 rounded-xl">
+      <input id="shopMobile" placeholder="Mobile *" class="w-full border p-3 rounded-xl">
+      <input id="shopGSTIN" placeholder="GSTIN" class="w-full border p-3 rounded-xl">
       <input id="shopUPI" placeholder="UPI ID" class="w-full border p-3 rounded-xl">
-      <select id="ownerState" class="w-full border p-3 rounded-xl"><option value="Maharashtra">Maharashtra</option><option value="Other">Other State</option></select>
-      <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="gstEnabled" checked class="w-4 h-4"> GST Bill चालू करायचा?</label>
-      <button onclick="saveShop()" class="w-full bg-[#0f1a4d] text-white py-4 rounded-xl font-bold text-lg mt-2">✅ दुकान सेव करा</button>
+      <button onclick="saveShop()" class="w-full bg-[#0f1a4d] text-white py-4 rounded-xl font-bold">✅ सेव करा & Dashboard</button>
+      <button onclick="backRole()" class="w-full text-sm text-gray-500">← मागे जा</button>
     </div>
   </div>
-  <div id="mainPage" class="hidden">
+  <div id="empSetup" class="hidden p-6">
+    <h2 class="font-bold text-xl mb-2">कर्मचारी - Profile</h2>
+    <div class="space-y-3">
+      <input id="empName" placeholder="तुमचं नाव *" class="w-full border p-3 rounded-xl">
+      <input id="empMobile" placeholder="Mobile *" class="w-full border p-3 rounded-xl">
+      <input id="empPincode" placeholder="तुमचा Pincode - 413102 *" class="w-full border p-3 rounded-xl">
+      <select id="empSkill" class="w-full border p-3 rounded-xl"><option>Salesman</option><option>Accountant</option><option>Manager</option><option>Delivery Boy</option><option>Helper</option></select>
+      <button onclick="saveEmployeeProfile()" class="w-full bg-orange-500 text-white py-4 rounded-xl font-bold">✅ सेव करा & नोकरी शोधा</button>
+      <button onclick="backRole()" class="w-full text-sm text-gray-500">← मागे जा</button>
+    </div>
+  </div>
+  <div id="ownerDash" class="hidden">
     <div class="grid grid-cols-3 gap-2 p-3 bg-gray-50">
-      <button onclick="showTab('store')" class="bg-blue-600 text-white p-3 rounded-xl text-xs font-bold">📦 Store</button>
-      <button onclick="showTab('billing')" class="bg-green-600 text-white p-3 rounded-xl text-xs font-bold">🧾 Billing</button>
-      <button onclick="showTab('udhar')" class="bg-orange-500 text-white p-3 rounded-xl text-xs font-bold">📒 उधार</button>
-      <button onclick="showTab('gstreport')" class="bg-purple-600 text-white p-3 rounded-xl text-xs font-bold">📊 GST Report</button>
-      <button onclick="showTab('attendance')" class="bg-indigo-600 text-white p-3 rounded-xl text-xs font-bold">👷 Attendance Max 9</button>
-      <button onclick="showTab('settings')" class="bg-gray-700 text-white p-3 rounded-xl text-xs font-bold">⚙️ Setting</button>
+      <button onclick="showTab('store')" class="bg-blue-600 text-white p-3 rounded-xl text-[11px] font-bold">📦 Store</button>
+      <button onclick="showTab('billing')" class="bg-green-600 text-white p-3 rounded-xl text-[11px] font-bold">🧾 Billing</button>
+      <button onclick="showTab('udhar')" class="bg-orange-500 text-white p-3 rounded-xl text-[11px] font-bold">📒 उधार</button>
+      <button onclick="showTab('vacancy')" class="bg-pink-600 text-white p-3 rounded-xl text-[11px] font-bold">📢 Vacancy</button>
+      <button onclick="showTab('attendance')" class="bg-indigo-600 text-white p-3 rounded-xl text-[11px] font-bold">👷 Attendance 9</button>
+      <button onclick="showTab('gstreport')" class="bg-purple-600 text-white p-3 rounded-xl text-[11px] font-bold">📊 GST</button>
     </div>
-    <div id="storeTab" class="tab p-4">
-      <h3 class="font-bold text-lg mb-3">वस्तू Add करा (GST सह)</h3>
-      <div class="bg-blue-50 p-3 rounded-xl space-y-2 mb-4">
-        <input id="pName" placeholder="वस्तूचे नाव" class="w-full border p-2 rounded">
-        <div class="grid grid-cols-2 gap-2"><select id="pCat" class="border p-2 rounded text-sm"><option>किराणा</option><option>हार्डवेअर</option><option>कपडे</option><option>चपला</option><option>मोबाईल अॅक्सेसरीज</option><option>इलेक्ट्रॉनिक्स</option><option>जनरल</option><option>स्टेशनरी</option><option>इतर</option></select><input id="pHSN" placeholder="HSN Code" class="border p-2 rounded text-sm"></div>
-        <div class="grid grid-cols-3 gap-2"><input id="pBuy" type="number" placeholder="खरेदी ₹" class="border p-2 rounded"><input id="pSell" type="number" placeholder="विक्री ₹" class="border p-2 rounded"><input id="pQty" type="number" placeholder="नग" class="border p-2 rounded"></div>
-        <div class="grid grid-cols-2 gap-2"><select id="pGST" class="border p-2 rounded text-sm"><option value="0">GST 0%</option><option value="5" selected>GST 5%</option><option value="12">GST 12%</option><option value="18">GST 18%</option><option value="28">GST 28%</option></select><select id="pGSTType" class="border p-2 rounded text-sm"><option value="exclusive">GST वेगळा</option><option value="inclusive">GST सहित</option></select></div>
-        <button onclick="addProduct()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">+ Add to Store</button>
-      </div>
-      <input id="searchProd" oninput="renderProducts()" placeholder="🔍 शोधा" class="w-full border p-3 rounded-xl mb-3"><div id="productList" class="space-y-2"></div>
-    </div>
-    <div id="billingTab" class="tab hidden p-4">
-      <h3 class="font-bold text-lg mb-3">Smart Billing (GST Auto)</h3>
-      <input id="billSearch" oninput="searchForBill()" placeholder="🔍 वस्तू शोधा..." class="w-full border p-3 rounded-xl mb-2"><div id="billSearchResult" class="mb-3"></div>
-      <div class="bg-gray-50 p-3 rounded-xl"><div id="cart" class="space-y-2 mb-3"></div><div class="border-t pt-2 text-sm"><div class="flex justify-between"><span>Subtotal:</span><span id="subTotal">₹0</span></div><div class="flex justify-between"><span>GST:</span><span id="cgstTotal">₹0</span></div><div class="flex justify-between font-bold text-base mt-1"><span>Total + GST:</span><span id="grandTotal">₹0</span></div></div><div class="grid grid-cols-3 gap-2 mt-3"><button onclick="setPay('Cash')" id="payCash" class="bg-green-100 border-2 border-green-600 py-2 rounded font-bold">Cash</button><button onclick="setPay('UPI')" id="payUPI" class="bg-blue-50 border py-2 rounded">UPI</button><button onclick="setPay('Udhar')" id="payUdhar" class="bg-orange-50 border py-2 rounded">उधार</button></div><div id="custFields" class="hidden mt-3 space-y-2"><input id="custName" placeholder="Customer नाव *" class="w-full border p-2 rounded"><input id="custMobile" placeholder="Customer Mobile *" class="w-full border p-2 rounded"></div><button onclick="generateBill()" class="w-full bg-[#0f1a4d] text-white py-3 rounded-xl font-bold mt-3">🧾 बिल तयार करा + PDF</button><div id="billActions" class="hidden grid grid-cols-2 gap-2 mt-2"><button onclick="shareWhatsApp()" class="bg-green-500 text-white py-3 rounded-xl font-bold">📱 WhatsApp</button><button onclick="downloadPDF()" class="bg-gray-700 text-white py-3 rounded-xl">📄 PDF</button></div></div>
-    </div>
-    <div id="udharTab" class="tab hidden p-4"><h3 class="font-bold text-lg mb-3">उधार खातं</h3><div id="udharList"></div></div>
-    <div id="gstreportTab" class="tab hidden p-4"><h3 class="font-bold text-lg mb-2">GST Report</h3><div class="bg-purple-50 p-3 rounded-xl text-sm space-y-1 mb-3"><div class="flex justify-between"><span>आजचा GST:</span><b id="todayGST">₹0</b></div><div class="flex justify-between"><span>या महिन्याचा GST:</span><b id="monthGST">₹0</b></div><div class="flex justify-between"><span>एकूण Sale:</span><b id="totalSaleWithGST">₹0</b></div></div><button onclick="exportGSTExcel()" class="w-full bg-purple-600 text-white py-2 rounded-xl mb-2">📊 GST Report Download</button><div id="gstBillList" class="space-y-2 text-xs"></div></div>
-    <div id="attendanceTab" class="tab hidden p-4"><div class="flex justify-between items-center mb-3"><h3 class="font-bold text-lg">Attendance (Max 9)</h3><button onclick="addEmployee()" class="bg-indigo-600 text-white px-3 py-1 rounded text-xs">+ Add</button></div><div id="employeeList" class="space-y-2"></div><div class="mt-4 p-3 bg-gray-50 rounded-xl"><h4 class="font-bold text-sm mb-2">आजची हजेरी</h4><div id="attendanceLog" class="text-xs space-y-1"></div></div></div>
-    <div id="settingsTab" class="tab hidden p-4"><h3 class="font-bold mb-3">Plan: Basic ₹69 / Pro ₹99 / Yearly ₹499 / Pro Yearly ₹699</h3><button onclick="clearData()" class="w-full bg-red-50 text-red-600 border py-2 rounded-xl">🗑️ Data Delete</button></div>
-  </div>
-</div>
-<script>
-let shop=JSON.parse(localStorage.getItem('pd_shop_v3')||'null');let products=JSON.parse(localStorage.getItem('pd_products_v3')||'[]');let bills=JSON.parse(localStorage.getItem('pd_bills_v3')||'[]');let customers=JSON.parse(localStorage.getItem('pd_customers_v3')||'[]');let employees=JSON.parse(localStorage.getItem('pd_employees_v3')||'[]');let attendance=JSON.parse(localStorage.getItem('pd_attendance_v3')||'[]');let cart=[];let payMode='Cash';let lastBillData=null;
-function init(){if(shop){document.getElementById('loginPage').classList.add('hidden');document.getElementById('mainPage').classList.remove('hidden');document.getElementById('shopInfo').innerText=shop.name+" | "+shop.addr+(shop.gstin?" | GSTIN: "+shop.gstin:"");renderProducts();renderUdhar();renderGST();renderEmployees();}}
-function saveShop(){let name=document.getElementById('shopName').value,addr=document.getElementById('shopAddr').value,mob=document.getElementById('shopMobile').value;if(!name||!addr||!mob){alert('नाव, पत्ता, मोबाइल भरावा लागेल');return;}shop={name,addr,mobile:mob,gstin:document.getElementById('shopGSTIN').value,upi:document.getElementById('shopUPI').value,state:document.getElementById('ownerState').value,gstEnabled:document.getElementById('gstEnabled').checked};localStorage.setItem('pd_shop_v3',JSON.stringify(shop));init();}
-function showTab(t){document.querySelectorAll('.tab').forEach(e=>e.classList.add('hidden'));document.getElementById(t+'Tab').classList.remove('hidden');}
-function addProduct(){let n=document.getElementById('pName').value,cat=document.getElementById('pCat').value,hsn=document.getElementById('pHSN').value,buy=+document.getElementById('pBuy').value||0,sell=+document.getElementById('pSell').value||0,qty=+document.getElementById('pQty').value||0,gst=+document.getElementById('pGST').value||0;if(!n||!sell){alert('नाव आणि विक्री किंमत टाका');return;}products.push({id:Date.now(),name:n,cat,hsn,buy,sell,qty,gst,keyword:n.toLowerCase()});localStorage.setItem('pd_products_v3',JSON.stringify(products));document.getElementById('pName').value='';renderProducts();}
-function renderProducts(){let q=(document.getElementById('searchProd')?.value||'').toLowerCase();let list=document.getElementById('productList');list.innerHTML='';products.filter(p=>p.name.toLowerCase().includes(q)).forEach(p=>{list.innerHTML+=`<div class="border p-3 rounded-xl flex justify-between"><div><b>${p.name}</b> <span class="text-[10px] bg-gray-100 px-1 rounded">${p.cat} | HSN:${p.hsn||'-'} | GST ${p.gst}%</span><br><small>₹${p.sell} | Stock:${p.qty}</small></div><button onclick="delProd(${p.id})" class="text-red-500 text-xs">Delete</button></div>`;});}
-function delProd(id){products=products.filter(p=>p.id!=id);localStorage.setItem('pd_products_v3',JSON.stringify(products));renderProducts();}
-function searchForBill(){let q=document.getElementById('billSearch').value.toLowerCase();let res=document.getElementById('billSearchResult');res.innerHTML='';if(!q)return;products.filter(p=>p.name.toLowerCase().includes(q)).slice(0,5).forEach(p=>{res.innerHTML+=`<div onclick="addToCart(${p.id})" class="border p-2 rounded bg-white cursor-pointer text-sm">+ ${p.name} - ₹${p.sell} (GST ${p.gst}%)</div>`;});}
-function addToCart(id){let p=products.find(x=>x.id==id);if(p.qty<=0){alert('Stock संपला');return;}let c=cart.find(x=>x.id==id);if(c)c.q++;else cart.push({...p,q:1});renderCart();}
-function renderCart(){let el=document.getElementById('cart');el.innerHTML='';let sub=0,gstTot=0;cart.forEach((item,i)=>{let gstPerItem=shop?.gstEnabled?(item.sell*item.gst/100):0;let itemTotal=item.sell*item.q;sub+=itemTotal;gstTot+=gstPerItem*item.q;el.innerHTML+=`<div class="flex justify-between text-sm"><span>${item.name} x${item.q}</span><span>₹${itemTotal} <button onclick="cart.splice(${i},1);renderCart()" class="text-red-500 ml-2">x</button></span></div>`;});document.getElementById('subTotal').innerText='₹'+sub;document.getElementById('cgstTotal').innerText='₹'+gstTot.toFixed(2);document.getElementById('grandTotal').innerText='₹'+(sub+gstTot).toFixed(2);}
-function setPay(m){payMode=m;document.querySelectorAll('.payBtn').forEach(b=>b.classList.remove('border-2','border-green-600'));document.getElementById('pay'+m).classList.add('border-2','border-green-600');document.getElementById('custFields').classList.toggle('hidden',m=='Cash');}
-function generateBill(){if(cart.length==0){alert('Cart रिकामं आहे');return;}let sub=0,gstAmt=0;cart.forEach(i=>{sub+=i.sell*i.q;if(shop?.gstEnabled)gstAmt+=i.sell*i.gst/100*i.q;});let total=sub+gstAmt;let custName=document.getElementById('custName').value||'Cash Customer',custMob=document.getElementById('custMobile').value||'';if(payMode!='Cash'&&(!custName||!custMob)){alert('Customer नाव आणि Mobile टाका');return;}let bill={id:Date.now(),items:[...cart],sub,gstAmt,total,payMode,custName,custMob,date:new Date().toLocaleString()};bills.push(bill);localStorage.setItem('pd_bills_v3',JSON.stringify(bills));if(payMode=='Udhar'){let c=customers.find(x=>x.mobile==custMob);if(c){c.udhar+=total;}else{customers.push({name:custName,mobile:custMob,udhar:total});}localStorage.setItem('pd_customers_v3',JSON.stringify(customers));}cart.forEach(ci=>{let p=products.find(pp=>pp.id==ci.id);if(p)p.qty-=ci.q;});localStorage.setItem('pd_products_v3',JSON.stringify(products));lastBillData=bill;document.getElementById('billActions').classList.remove('hidden');alert('बिल तयार! WhatsApp वर पाठवा');cart=[];renderCart();renderUdhar();renderGST();renderProducts();}
-function makePDF(){const {jsPDF}=window.jspdf;let doc=new jsPDF();let b=lastBillData;if(!b)return null;doc.setFontSize(16);doc.text(shop.name,10,15);doc.setFontSize(9);doc.text(shop.addr,10,22);if(shop.gstin)doc.text("GSTIN: "+shop.gstin,10,27);doc.text("Bill No: "+b.id,150,15);doc.text(b.date,150,22);doc.text("Customer: "+b.custName+" | "+b.custMob,10,38);let y=45;doc.text("Item | Qty | Rate | GST% | HSN | Amount",10,y);y+=5;b.items.forEach(it=>{let amt=it.sell*it.q;let gst=shop.gstEnabled?it.sell*it.gst/100*it.q:0;doc.text(`${it.name} | ${it.q} | ${it.sell} | ${it.gst}% | ${it.hsn||'-'} | ${amt+gst}`,10,y);y+=7;});y+=5;doc.text(`Subtotal: Rs ${b.sub}`,10,y);y+=7;doc.text(`GST Total: Rs ${b.gstAmt.toFixed(2)}`,10,y);y+=7;doc.text(`Grand Total: Rs ${b.total.toFixed(2)}`,10,y);return doc;}
-function downloadPDF(){let doc=makePDF();if(doc)doc.save(`Bill_${lastBillData.id}.pdf`);}
-function shareWhatsApp(){let doc=makePDF();if(!doc){alert('आधी बिल बनवा');return;}let msg=`*${shop.name}* %0ABill: ${lastBillData.id}%0ACustomer: ${lastBillData.custName}%0ATotal: Rs ${lastBillData.total.toFixed(2)} (GST ${lastBillData.gstAmt.toFixed(2)})%0AThanks!`;window.open(`https://wa.me/91${lastBillData.custMob}?text=${msg}`,'_blank');doc.save(`Bill_${lastBillData.id}.pdf`);}
-function renderUdhar(){let el=document.getElementById('udharList');el.innerHTML='';if(customers.length==0)el.innerHTML='<p class="text-sm text-gray-400">अजून उधार नाही</p>';customers.forEach(c=>{el.innerHTML+=`<div class="border p-3 rounded-xl flex justify-between mb-2"><div><b>${c.name}</b><br><small>${c.mobile}</small></div><div class="text-right"><b class="text-red-600">₹${c.udhar.toFixed(2)}</b><br><button onclick="remindCust('${c.mobile}')" class="text-xs bg-green-100 px-2 py-1 rounded">Reminder</button></div></div>`;});}
-function remindCust(mob){let c=customers.find(x=>x.mobile==mob);window.open(`https://wa.me/91${mob}?text=${encodeURIComponent(`नमस्कार ${c.name}, तुमचे ₹${c.udhar.toFixed(2)} बाकी आहे ${shop.name} मध्ये.`)}`,'_blank');}
-function renderGST(){let today=new Date().toLocaleDateString();let todayB=bills.filter(b=>b.date.includes(today));let tGST=todayB.reduce((s,b)=>s+b.gstAmt,0);let mGST=bills.reduce((s,b)=>s+b.gstAmt,0);let tSaleGST=bills.reduce((s,b)=>s+b.total,0);document.getElementById('todayGST').innerText='₹'+tGST.toFixed(2);document.getElementById('monthGST').innerText='₹'+mGST.toFixed(2);document.getElementById('totalSaleWithGST').innerText='₹'+tSaleGST.toFixed(2);let list=document.getElementById('gstBillList');list.innerHTML='';bills.slice(-10).reverse().forEach(b=>{list.innerHTML+=`<div class="border p-2 rounded bg-white flex justify-between"><span>${b.date} | ${b.custName}</span><b>₹${b.gstAmt.toFixed(2)} GST</b></div>`;});}
-function exportGSTExcel(){let csv="BillID,Date,Customer,Subtotal,GST,Total,Payment\n";bills.forEach(b=>{csv+=`${b.id},${b.date},${b.custName},${b.sub},${b.gstAmt},${b.total},${b.payMode}\n`;});let blob=new Blob([csv],{type:'text/csv'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='GST_Report.csv';a.click();}
-function addEmployee(){if(employees.length>=9){alert('Max 9 Employee Limit');return;}let name=prompt('Employee नाव');let mob=prompt('Mobile');if(!name||!mob)return;employees.push({id:Date.now(),name,mobile:mob});localStorage.setItem('pd_employees_v3',JSON.stringify(employees));renderEmployees();}
-function renderEmployees(){let el=document.getElementById('employeeList');el.innerHTML='';employees.forEach(e=>{el.innerHTML+=`<div class="border p-2 rounded flex justify-between text-sm"><div><b>${e.name}</b><br>${e.mobile}</div><div><button onclick="entryEmp(${e.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Entry</button> <button onclick="exitEmp(${e.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Exit</button></div></div>`;});let log=document.getElementById('attendanceLog');log.innerHTML='';attendance.slice(-10).reverse().forEach(a=>{log.innerHTML+=`<div>${a.name} - Entry: ${a.entry} | Exit: ${a.exit||'चालू'}</div>`;});}
-function entryEmp(id){let emp=employees.find(e=>e.id==id);attendance.push({empId:id,name:emp.name,date:new Date().toLocaleDateString(),entry:new Date().toLocaleTimeString(),exit:null});localStorage.setItem('pd_attendance_v3',JSON.stringify(attendance));renderEmployees();}
-function exitEmp(id){let rec=attendance.filter(a=>a.empId==id).pop();if(rec){rec.exit=new Date().toLocaleTimeString();localStorage.setItem('pd_attendance_v3',JSON.stringify(attendance));renderEmployees();}}
-function clearData(){if(confirm('सर्व Data Delete करायचा?')){localStorage.clear();location.reload();}}
-init();
-</script>
-</body>
-</html>
-<h3 class="font-bold">Attendance Max 9</h3><button onclick="addEmployeeToShop()" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs">+ Add Emp</button></div><div id="employeeList" class="space-y-2"></div><div class="bg-gray-50 p-2 rounded mt-3"><div id="attendanceLog" class="text-[11px] space-y-1"></div></div></div>
+    <div id="storeTab" class="tab p-4"><h3 class="font-bold mb-2">Store + GST</h3><div class="bg-blue-50 p-3 rounded-xl space-y-2 mb-3"><input id="pName" placeholder="वस्तू नाव" class="w-full border p-2 rounded"><div class="grid grid-cols-2 gap-2"><select id="pCat" class="border p-2 rounded text-xs"><option>किराणा</option><option>हार्डवेअर</option><option>कपडे</option><option>चपला</option><option>मोबाईल</option><option>इतर</option></select><input id="pHSN" placeholder="HSN" class="border p-2 rounded text-xs"></div><div class="grid grid-cols-3 gap-2"><input id="pBuy" type="number" placeholder="खरेदी" class="border p-2 rounded"><input id="pSell" type="number" placeholder="विक्री" class="border p-2 rounded"><input id="pQty" type="number" placeholder="नग" class="border p-2 rounded"></div><div class="grid grid-cols-2 gap-2"><select id="pGST" class="border p-2 rounded text-xs"><option value="0">0%</option><option value="5" selected>5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select><button onclick="addProduct()" class="bg-blue-600 text-white rounded font-bold text-xs">+ Add</button></div></div><input id="searchProd" oninput="renderProducts()" placeholder="🔍 शोधा" class="w-full border p-2 rounded-xl mb-2"><div id="productList" class="space-y-2"></div></div>
+    <div id="billingTab" class="tab hidden p-4"><h3 class="font-bold mb-2">Billing</h3><input id="billSearch" oninput="searchForBill()" placeholder="वस्तू शोधा" class="w-full border p-2 rounded-xl mb-2"><div id="billSearchResult" class="mb-2"></div><div class="bg-gray-50 p-3 rounded-xl"><div id="cart" class="space-y-1 mb-2"></div><div class="border-t pt-2 text-sm"><div class="flex justify-between"><span>Subtotal</span><span id="subTotal">₹0</span></div><div class="flex justify-between"><span>GST</span><span id="gstTotal">₹0</span></div><div class="flex justify-between font-bold"><span>Total</span><span id="grandTotal">₹0</span></div></div><div class="grid grid-cols-3 gap-2 mt-2"><button onclick="setPay('Cash')" id="payCash" class="border-2 border-green-600 bg-green-50 py-2 rounded text-xs font-bold">Cash</button><button onclick="setPay('UPI')" id="payUPI" class="border py-2 rounded text-xs">UPI</button><button onclick="setPay('Udhar')" id="payUdhar" class="border py-2 rounded text-xs">उधार</button></div><div id="custFields" class="hidden mt-2 space-y-2"><input id="custName" placeholder="Customer नाव" class="w-full border p-2 rounded"><input id="custMobile" placeholder="Mobile" class="w-full border p-2 rounded"></div><button onclick="generateBill()" class="w-full bg-[#0f1a4d] text-white py-3 rounded-xl font-bold mt-2">बिल + PDF</button><div id="billActions" class="hidden grid grid-cols-2 gap-2 mt-2"><button onclick="shareWhatsApp()" class="bg-green-500 text-white py-2 rounded text-xs font-bold">WhatsApp</button><button onclick="downloadPDF()" class="bg-gray-700 text-white py-2 rounded text-xs">PDF Download</button></div></div></div>
+    <div id="udharTab" class="tab hidden p-4"><h3 class="font-bold mb-2">उधार</h3><div id="udharList"></div></div>
+    <div id="vacancyTab" class="tab hidden p-4"><h3 class="font-bold mb-2">Vacancy Post करा</h3><div class="bg-pink-50 p-3 rounded-xl space-y-2 mb-3"><select id="vacPost" class="w-full border p-2 rounded"><option>Salesman</option><option>Accountant</option><option>Manager</option><option>Delivery Boy</option></select><input id="vacSalary" placeholder="Salary - 12000" class="w-full border p-2 rounded" type="number"><input id="vacPincode" placeholder="दुकानाचा Pincode" class="w-full border p-2 rounded"><textarea id="vacDesc" placeholder="कामाचं वर्णन" class="w-full border p-2 rounded"></textarea><button onclick="postVacancy()" class="w-full bg-pink-600 text-white py-2 rounded font-bold">📢 Vacancy Post करा</button></div><h4 class="font-bold text-sm mt-3">तुमच्या Vacancy</h4><div id="myVacancies" class="space-y-2 mt-2"></div><h4 class="font-bold text-sm mt-4">आलेले Applications</h4><div id="applicationsList" class="space-y-2 mt-2 text-xs"></div></div>
+    <div id="attendanceTab" class="tab hidden p-4"><div class="flex justify-between mb-2"><h3 class="font-bold">Attendance Max 9</h3><button onclick="addEmployeeToShop()" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs">+ Add Emp</button></div><div id="employeeList" class="space-y-2"></div><div class="bg-gray-50 p-2 rounded mt-3"><div id="attendanceLog" class="text-[11px] space-y-1"></div></div></div>
     <div id="gstreportTab" class="tab hidden p-4"><h3 class="font-bold mb-2">GST Report</h3><div class="bg-purple-50 p-3 rounded text-xs space-y-1"><div class="flex justify-between"><span>आजचा GST</span><b id="todayGST">₹0</b></div><div class="flex justify-between"><span>Total Sale</span><b id="totalSaleWithGST">₹0</b></div></div><button onclick="exportGSTExcel()" class="w-full bg-purple-600 text-white py-2 rounded mt-2 text-xs">Excel Download</button><div id="gstBillList" class="space-y-1 mt-2 text-[11px]"></div></div>
   </div>
   <div id="empDash" class="hidden">
