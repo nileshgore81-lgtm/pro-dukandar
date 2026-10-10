@@ -1,109 +1,99 @@
 <!DOCTYPE html>
 <html lang="mr">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pro Dukandar v4 - Jobs + Cloud</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-</head>
-<body class="bg-gray-100 min-h-screen">
-<div class="max-w-md mx-auto bg-white min-h-screen shadow-xl">
-  <div class="bg-[#0f1a4d] text-white p-4 sticky top-0 z-50">
-    <h1 class="font-bold text-lg">🏪 Pro Dukandar v4 <span class="bg-orange-500 text-[10px] px-2 py-1 rounded ml-2">JOBS+GST+CLOUD</span></h1>
-    <div id="shopInfo" class="text-[11px] opacity-80 mt-1"></div>
-  </div>
-  <div id="rolePage" class="p-8 text-center">
-    <h2 class="text-2xl font-bold mb-6">तुम्ही कोण आहात?</h2>
-    <button onclick="setRole('owner')" class="w-full bg-[#0f1a4d] text-white py-5 rounded-2xl font-bold text-lg mb-4">👑 मी मालक आहे<br><span class="text-xs font-normal opacity-70">दुकान चालवतो</span></button>
-    <button onclick="setRole('employee')" class="w-full bg-orange-500 text-white py-5 rounded-2xl font-bold text-lg">👷 मी कर्मचारी आहे<br><span class="text-xs font-normal opacity-80">नोकरी शोधतोय</span></button>
-  </div>
-  <div id="ownerSetup" class="hidden p-6">
-    <h2 class="font-bold text-xl mb-4">मालक - दुकान सेटअप</h2>
-    <div class="space-y-3">
-      <input id="shopName" placeholder="दुकान नाव *" class="w-full border p-3 rounded-xl">
-      <input id="shopAddr" placeholder="पत्ता + Pincode *" class="w-full border p-3 rounded-xl">
-      <input id="shopMobile" placeholder="Mobile *" class="w-full border p-3 rounded-xl">
-      <input id="shopGSTIN" placeholder="GSTIN" class="w-full border p-3 rounded-xl">
-      <input id="shopUPI" placeholder="UPI ID" class="w-full border p-3 rounded-xl">
-      <button onclick="saveShop()" class="w-full bg-[#0f1a4d] text-white py-4 rounded-xl font-bold">✅ सेव करा & Dashboard</button>
-      <button onclick="backRole()" class="w-full text-sm text-gray-500">← मागे जा</button>
-    </div>
-  </div>
-  <div id="empSetup" class="hidden p-6">
-    <h2 class="font-bold text-xl mb-2">कर्मचारी - Profile</h2>
-    <div class="space-y-3">
-      <input id="empName" placeholder="तुमचं नाव *" class="w-full border p-3 rounded-xl">
-      <input id="empMobile" placeholder="Mobile *" class="w-full border p-3 rounded-xl">
-      <input id="empPincode" placeholder="तुमचा Pincode - 413102 *" class="w-full border p-3 rounded-xl">
-      <select id="empSkill" class="w-full border p-3 rounded-xl"><option>Salesman</option><option>Accountant</option><option>Manager</option><option>Delivery Boy</option><option>Helper</option></select>
-      <button onclick="saveEmployeeProfile()" class="w-full bg-orange-500 text-white py-4 rounded-xl font-bold">✅ सेव करा & नोकरी शोधा</button>
-      <button onclick="backRole()" class="w-full text-sm text-gray-500">← मागे जा</button>
-    </div>
-  </div>
-  <div id="ownerDash" class="hidden">
-    <div class="grid grid-cols-3 gap-2 p-3 bg-gray-50">
-      <button onclick="showTab('store')" class="bg-blue-600 text-white p-3 rounded-xl text-[11px] font-bold">📦 Store</button>
-      <button onclick="showTab('billing')" class="bg-green-600 text-white p-3 rounded-xl text-[11px] font-bold">🧾 Billing</button>
-      <button onclick="showTab('udhar')" class="bg-orange-500 text-white p-3 rounded-xl text-[11px] font-bold">📒 उधार</button>
-      <button onclick="showTab('vacancy')" class="bg-pink-600 text-white p-3 rounded-xl text-[11px] font-bold">📢 Vacancy</button>
-      <button onclick="showTab('attendance')" class="bg-indigo-600 text-white p-3 rounded-xl text-[11px] font-bold">👷 Attendance 9</button>
-      <button onclick="showTab('gstreport')" class="bg-purple-600 text-white p-3 rounded-xl text-[11px] font-bold">📊 GST</button>
-    </div>
-    <div id="storeTab" class="tab p-4"><h3 class="font-bold mb-2">Store + GST</h3><div class="bg-blue-50 p-3 rounded-xl space-y-2 mb-3"><input id="pName" placeholder="वस्तू नाव" class="w-full border p-2 rounded"><div class="grid grid-cols-2 gap-2"><select id="pCat" class="border p-2 rounded text-xs"><option>किराणा</option><option>हार्डवेअर</option><option>कपडे</option><option>चपला</option><option>मोबाईल</option><option>इतर</option></select><input id="pHSN" placeholder="HSN" class="border p-2 rounded text-xs"></div><div class="grid grid-cols-3 gap-2"><input id="pBuy" type="number" placeholder="खरेदी" class="border p-2 rounded"><input id="pSell" type="number" placeholder="विक्री" class="border p-2 rounded"><input id="pQty" type="number" placeholder="नग" class="border p-2 rounded"></div><div class="grid grid-cols-2 gap-2"><select id="pGST" class="border p-2 rounded text-xs"><option value="0">0%</option><option value="5" selected>5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select><button onclick="addProduct()" class="bg-blue-600 text-white rounded font-bold text-xs">+ Add</button></div></div><input id="searchProd" oninput="renderProducts()" placeholder="🔍 शोधा" class="w-full border p-2 rounded-xl mb-2"><div id="productList" class="space-y-2"></div></div>
-    <div id="billingTab" class="tab hidden p-4"><h3 class="font-bold mb-2">Billing</h3><input id="billSearch" oninput="searchForBill()" placeholder="वस्तू शोधा" class="w-full border p-2 rounded-xl mb-2"><div id="billSearchResult" class="mb-2"></div><div class="bg-gray-50 p-3 rounded-xl"><div id="cart" class="space-y-1 mb-2"></div><div class="border-t pt-2 text-sm"><div class="flex justify-between"><span>Subtotal</span><span id="subTotal">₹0</span></div><div class="flex justify-between"><span>GST</span><span id="gstTotal">₹0</span></div><div class="flex justify-between font-bold"><span>Total</span><span id="grandTotal">₹0</span></div></div><div class="grid grid-cols-3 gap-2 mt-2"><button onclick="setPay('Cash')" id="payCash" class="border-2 border-green-600 bg-green-50 py-2 rounded text-xs font-bold">Cash</button><button onclick="setPay('UPI')" id="payUPI" class="border py-2 rounded text-xs">UPI</button><button onclick="setPay('Udhar')" id="payUdhar" class="border py-2 rounded text-xs">उधार</button></div><div id="custFields" class="hidden mt-2 space-y-2"><input id="custName" placeholder="Customer नाव" class="w-full border p-2 rounded"><input id="custMobile" placeholder="Mobile" class="w-full border p-2 rounded"></div><button onclick="generateBill()" class="w-full bg-[#0f1a4d] text-white py-3 rounded-xl font-bold mt-2">बिल + PDF</button><div id="billActions" class="hidden grid grid-cols-2 gap-2 mt-2"><button onclick="shareWhatsApp()" class="bg-green-500 text-white py-2 rounded text-xs font-bold">WhatsApp</button><button onclick="downloadPDF()" class="bg-gray-700 text-white py-2 rounded text-xs">PDF Download</button></div></div></div>
-    <div id="udharTab" class="tab hidden p-4"><h3 class="font-bold mb-2">उधार</h3><div id="udharList"></div></div>
-    <div id="vacancyTab" class="tab hidden p-4"><h3 class="font-bold mb-2">Vacancy Post करा</h3><div class="bg-pink-50 p-3 rounded-xl space-y-2 mb-3"><select id="vacPost" class="w-full border p-2 rounded"><option>Salesman</option><option>Accountant</option><option>Manager</option><option>Delivery Boy</option></select><input id="vacSalary" placeholder="Salary - 12000" class="w-full border p-2 rounded" type="number"><input id="vacPincode" placeholder="दुकानाचा Pincode" class="w-full border p-2 rounded"><textarea id="vacDesc" placeholder="कामाचं वर्णन" class="w-full border p-2 rounded"></textarea><button onclick="postVacancy()" class="w-full bg-pink-600 text-white py-2 rounded font-bold">📢 Vacancy Post करा</button></div><h4 class="font-bold text-sm mt-3">तुमच्या Vacancy</h4><div id="myVacancies" class="space-y-2 mt-2"></div><h4 class="font-bold text-sm mt-4">आलेले Applications</h4><div id="applicationsList" class="space-y-2 mt-2 text-xs"></div></div>
-    <div id="attendanceTab" class="tab hidden p-4"><div class="flex justify-between mb-2"><h3 class="font-bold">Attendance Max 9</h3><button onclick="addEmployeeToShop()" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs">+ Add Emp</button></div><div id="employeeList" class="space-y-2"></div><div class="bg-gray-50 p-2 rounded mt-3"><div id="attendanceLog" class="text-[11px] space-y-1"></div></div></div>
-    <div id="gstreportTab" class="tab hidden p-4"><h3 class="font-bold mb-2">GST Report</h3><div class="bg-purple-50 p-3 rounded text-xs space-y-1"><div class="flex justify-between"><span>आजचा GST</span><b id="todayGST">₹0</b></div><div class="flex justify-between"><span>Total Sale</span><b id="totalSaleWithGST">₹0</b></div></div><button onclick="exportGSTExcel()" class="w-full bg-purple-600 text-white py-2 rounded mt-2 text-xs">Excel Download</button><div id="gstBillList" class="space-y-1 mt-2 text-[11px]"></div></div>
-  </div>
-  <div id="empDash" class="hidden">
-    <div class="grid grid-cols-2 gap-2 p-3 bg-gray-50">
-      <button onclick="showEmpTab('jobsearch')" class="bg-orange-500 text-white p-3 rounded-xl text-xs font-bold">🔍 Job Search Pincode</button>
-      <button onclick="showEmpTab('myjobs')" class="bg-blue-600 text-white p-3 rounded-xl text-xs font-bold">📋 My Applications</button>
-      <button onclick="showEmpTab('entry')" class="bg-green-600 text-white p-3 rounded-xl text-xs font-bold">⏰ Entry/Exit Sale</button>
-    </div>
-    <div id="jobsearchTab" class="empTab p-4"><h3 class="font-bold mb-2">Pincode ने Vacancy शोधा</h3><div class="flex gap-2 mb-3"><input id="searchPincode" placeholder="Pincode - 413102" class="flex-1 border p-3 rounded-xl"><button onclick="searchJobs()" class="bg-orange-500 text-white px-4 rounded-xl font-bold">Search</button></div><div id="jobResults" class="space-y-2"></div></div>
-    <div id="myjobsTab" class="empTab hidden p-4"><h3 class="font-bold mb-2">माझे Applications</h3><div id="myApplications" class="space-y-2 text-sm"></div></div>
-    <div id="entryTab" class="empTab hidden p-4"><h3 class="font-bold mb-2">Entry/Exit + Sale</h3><button onclick="empEntry()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold mb-2">✅ Entry करा</button><button onclick="empExit()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold mb-3">🚪 Exit करा</button><div id="empSaleArea" class="hidden"><h4 class="font-bold text-sm">Sale Window</h4><div id="empCart" class="bg-gray-50 p-2 rounded text-sm">Sale इथे होईल</div></div></div>
-  </div>
-</div>
-<script>
-let role=localStorage.getItem('pd_role_v4');let shop=JSON.parse(localStorage.getItem('pd_shop_v4')||'null');let empProfile=JSON.parse(localStorage.getItem('pd_empProfile_v4')||'null');let products=JSON.parse(localStorage.getItem('pd_products_v4')||'[]');let bills=JSON.parse(localStorage.getItem('pd_bills_v4')||'[]');let customers=JSON.parse(localStorage.getItem('pd_customers_v4')||'[]');let vacancies=JSON.parse(localStorage.getItem('pd_vacancies_v4')||'[]');let applications=JSON.parse(localStorage.getItem('pd_applications_v4')||'[]');let employees=JSON.parse(localStorage.getItem('pd_employees_v4')||'[]');let attendance=JSON.parse(localStorage.getItem('pd_attendance_v4')||'[]');let cart=[];let payMode='Cash';let lastBillData=null;
-function initRole(){if(role=='owner'&&shop){document.getElementById('rolePage').classList.add('hidden');document.getElementById('ownerDash').classList.remove('hidden');document.getElementById('shopInfo').innerText=shop.name+" | "+shop.addr;renderProducts();renderUdhar();renderVacanciesOwner();renderGST();}else if(role=='employee'&&empProfile){document.getElementById('rolePage').classList.add('hidden');document.getElementById('empDash').classList.remove('hidden');document.getElementById('shopInfo').innerText=empProfile.name+" | Pincode: "+empProfile.pincode;renderMyApplications();}}
-function setRole(r){role=r;localStorage.setItem('pd_role_v4',r);document.getElementById('rolePage').classList.add('hidden');if(r=='owner'){if(shop){initRole();}else{document.getElementById('ownerSetup').classList.remove('hidden');}}else{if(empProfile){initRole();}else{document.getElementById('empSetup').classList.remove('hidden');}}}
-function backRole(){document.getElementById('ownerSetup').classList.add('hidden');document.getElementById('empSetup').classList.add('hidden');document.getElementById('rolePage').classList.remove('hidden');}
-function saveShop(){let name=document.getElementById('shopName').value,addr=document.getElementById('shopAddr').value,mob=document.getElementById('shopMobile').value;if(!name||!addr||!mob){alert('भरा');return;}shop={id:Date.now(),name,addr,mobile:mob,gstin:document.getElementById('shopGSTIN').value,upi:document.getElementById('shopUPI').value,pincode:addr.match(/\d{6}/)?.[0]||'413102',gstEnabled:true};localStorage.setItem('pd_shop_v4',JSON.stringify(shop));document.getElementById('ownerSetup').classList.add('hidden');initRole();document.getElementById('ownerDash').classList.remove('hidden');}
-function saveEmployeeProfile(){let name=document.getElementById('empName').value,mob=document.getElementById('empMobile').value,pin=document.getElementById('empPincode').value;if(!name||!mob||!pin){alert('भरा');return;}empProfile={id:Date.now(),name,mobile:mob,pincode:pin,skill:document.getElementById('empSkill').value};localStorage.setItem('pd_empProfile_v4',JSON.stringify(empProfile));document.getElementById('empSetup').classList.add('hidden');initRole();document.getElementById('empDash').classList.remove('hidden');}
-function showTab(t){document.querySelectorAll('.tab').forEach(e=>e.classList.add('hidden'));document.getElementById(t+'Tab').classList.remove('hidden');}
-function showEmpTab(t){document.querySelectorAll('.empTab').forEach(e=>e.classList.add('hidden'));document.getElementById(t+'Tab').classList.remove('hidden');}
-function addProduct(){let n=document.getElementById('pName').value,cat=document.getElementById('pCat').value,hsn=document.getElementById('pHSN').value,buy=+document.getElementById('pBuy').value||0,sell=+document.getElementById('pSell').value||0,qty=+document.getElementById('pQty').value||0,gst=+document.getElementById('pGST').value||0;if(!n||!sell){alert('नाव');return;}let p={id:Date.now(),name:n,cat,hsn,buy,sell,qty,gst,shopId:shop.id};products.push(p);localStorage.setItem('pd_products_v4',JSON.stringify(products));document.getElementById('pName').value='';renderProducts();}
-function renderProducts(){let q=(document.getElementById('searchProd')?.value||'').toLowerCase();let list=document.getElementById('productList');if(!list)return;list.innerHTML='';products.filter(p=>p.name.toLowerCase().includes(q)).forEach(p=>{list.innerHTML+=`<div class="border p-2 rounded flex justify-between text-xs"><div><b>${p.name}</b> ${p.gst}% Stock:${p.qty}</div><button onclick="delProd(${p.id})" class="text-red-500">Del</button></div>`;});}
-function delProd(id){products=products.filter(p=>p.id!=id);localStorage.setItem('pd_products_v4',JSON.stringify(products));renderProducts();}
-function searchForBill(){let q=document.getElementById('billSearch').value.toLowerCase();let res=document.getElementById('billSearchResult');res.innerHTML='';if(!q)return;products.filter(p=>p.name.toLowerCase().includes(q)).slice(0,5).forEach(p=>{res.innerHTML+=`<div onclick="addToCart(${p.id})" class="border p-2 rounded bg-white text-xs">+ ${p.name} ₹${p.sell} GST${p.gst}%</div>`;});}
-function addToCart(id){let p=products.find(x=>x.id==id);if(p.qty<=0){alert('Stock संपला');return;}let c=cart.find(x=>x.id==id);if(c)c.q++;else cart.push({...p,q:1});renderCart();}
-function renderCart(){let el=document.getElementById('cart');el.innerHTML='';let sub=0,gstTot=0;cart.forEach((it,i)=>{let g=it.gst||0;sub+=it.sell*it.q;gstTot+=it.sell*g/100*it.q;el.innerHTML+=`<div class="flex justify-between text-xs"><span>${it.name} x${it.q}</span><span>₹${it.sell*it.q} <button onclick="cart.splice(${i},1);renderCart()" class="text-red-500">x</button></span></div>`;});document.getElementById('subTotal').innerText='₹'+sub;document.getElementById('gstTotal').innerText='₹'+gstTot.toFixed(2);document.getElementById('grandTotal').innerText='₹'+(sub+gstTot).toFixed(2);}
-function setPay(m){payMode=m;document.querySelectorAll('[id^=pay]').forEach(b=>b.classList.remove('border-2','border-green-600'));document.getElementById('pay'+m)?.classList.add('border-2','border-green-600');document.getElementById('custFields').classList.toggle('hidden',m=='Cash');}
-function generateBill(){if(cart.length==0){alert('Cart रिकामं');return;}let sub=0,gstAmt=0;cart.forEach(i=>{sub+=i.sell*i.q;gstAmt+=i.sell*i.gst/100*i.q;});let total=sub+gstAmt;let custName=document.getElementById('custName').value||'Cash',custMob=document.getElementById('custMobile').value||'';if(payMode!='Cash'&&(!custName||!custMob)){alert('Customer भरा');return;}let bill={id:Date.now(),items:[...cart],sub,gstAmt,total,payMode,custName,custMob,date:new Date().toLocaleString(),shopId:shop.id};bills.push(bill);localStorage.setItem('pd_bills_v4',JSON.stringify(bills));if(payMode=='Udhar'){let c=customers.find(x=>x.mobile==custMob);if(c)c.udhar+=total;else customers.push({name:custName,mobile:custMob,udhar:total});localStorage.setItem('pd_customers_v4',JSON.stringify(customers));}cart.forEach(ci=>{let p=products.find(pp=>pp.id==ci.id);if(p)p.qty-=ci.q;});localStorage.setItem('pd_products_v4',JSON.stringify(products));lastBillData=bill;document.getElementById('billActions').classList.remove('hidden');alert('Bill Ready!');cart=[];renderCart();renderUdhar();renderGST();renderProducts();}
-function makePDF(){const {jsPDF}=window.jspdf;let doc=new jsPDF();let b=lastBillData;if(!b)return null;doc.setFontSize(14);doc.text(shop.name,10,15);doc.setFontSize(9);doc.text(shop.addr,10,22);if(shop.gstin)doc.text("GSTIN:"+shop.gstin,10,27);doc.text("Bill:"+b.id,150,15);doc.text(b.date,150,22);doc.text("Cust:"+b.custName+" "+b.custMob,10,35);let y=45;doc.text("Item | Qty | Rate | GST | Total",10,y);y+=5;b.items.forEach(it=>{let amt=it.sell*it.q;let gst=it.sell*it.gst/100*it.q;doc.text(`${it.name} | ${it.q} | ${it.sell} | ${it.gst}% | ${amt+gst}`,10,y);y+=7;});y+=5;doc.text(`Subtotal Rs ${b.sub} GST Rs ${b.gstAmt.toFixed(2)} Total Rs ${b.total.toFixed(2)}`,10,y);return doc;}
-function downloadPDF(){let doc=makePDF();if(doc)doc.save(`Bill_${lastBillData.id}.pdf`);}
-function shareWhatsApp(){let doc=makePDF();if(!doc){alert('Bill बनवा');return;}let msg=`*${shop.name}* Bill ${lastBillData.id} Total Rs ${lastBillData.total.toFixed(2)} GST ${lastBillData.gstAmt.toFixed(2)}`;window.open(`https://wa.me/91${lastBillData.custMob}?text=${encodeURIComponent(msg)}`,'_blank');doc.save(`Bill_${lastBillData.id}.pdf`);}
-function renderUdhar(){let el=document.getElementById('udharList');if(!el)return;el.innerHTML='';if(customers.length==0)el.innerHTML='No udhar';customers.forEach(c=>{el.innerHTML+=`<div class="border p-2 rounded flex justify-between text-xs"><div><b>${c.name}</b> ${c.mobile}</div><b class="text-red-600">₹${c.udhar.toFixed(2)}</b></div>`;});}
-function renderGST(){let tGST=bills.reduce((s,b)=>s+b.gstAmt,0);document.getElementById('todayGST').innerText='₹'+tGST.toFixed(2);document.getElementById('totalSaleWithGST').innerText='₹'+bills.reduce((s,b)=>s+b.total,0).toFixed(2);let list=document.getElementById('gstBillList');if(list){list.innerHTML='';bills.slice(-10).reverse().forEach(b=>{list.innerHTML+=`<div class="border p-1 rounded bg-white flex justify-between"><span>${b.date} ${b.custName}</span><b>₹${b.gstAmt.toFixed(2)}</b></div>`;});}}
-function exportGSTExcel(){let csv="BillID,Date,Customer,GST,Total\n";bills.forEach(b=>{csv+=`${b.id},${b.date},${b.custName},${b.gstAmt},${b.total}\n`;});let blob=new Blob([csv],{type:'text/csv'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='GST.csv';a.click();}
-function postVacancy(){let post=document.getElementById('vacPost').value,sal=document.getElementById('vacSalary').value,pin=document.getElementById('vacPincode').value,desc=document.getElementById('vacDesc').value;if(!pin||!sal){alert('Pincode Salary भरा');return;}let vac={id:Date.now(),shopId:shop.id,shopName:shop.name,post,salary:sal,pincode:pin,desc,date:new Date().toLocaleDateString()};vacancies.push(vac);localStorage.setItem('pd_vacancies_v4',JSON.stringify(vacancies));renderVacanciesOwner();alert('Vacancy Post झाली!');}
-function renderVacanciesOwner(){let el=document.getElementById('myVacancies');if(!el)return;el.innerHTML='';vacancies.filter(v=>v.shopId==shop.id).forEach(v=>{el.innerHTML+=`<div class="border p-2 rounded text-xs bg-white"><b>${v.post}</b> - ₹${v.salary} | Pincode ${v.pincode}<br><small>${v.desc}</small><br><button onclick="delVac(${v.id})" class="text-red-500 text-[10px]">Delete</button></div>`;});let appEl=document.getElementById('applicationsList');appEl.innerHTML='';applications.filter(a=>{let v=vacancies.find(vv=>vv.id==a.vacancyId);return v&&v.shopId==shop.id;}).forEach(a=>{appEl.innerHTML+=`<div class="border p-2 rounded bg-white"><b>${a.empName}</b> ${a.empMobile} | ${a.empSkill} | ${a.post}<br><button onclick="hireEmp(${a.empId})" class="bg-green-500 text-white px-2 py-1 rounded text-[10px] mt-1">Hire</button> <a href="https://wa.me/91${a.empMobile}" target="_blank" class="bg-blue-500 text-white px-2 py-1 rounded text-[10px]">WhatsApp</a></div>`;});}
-function delVac(id){vacancies=vacancies.filter(v=>v.id!=id);localStorage.setItem('pd_vacancies_v4',JSON.stringify(vacancies));renderVacanciesOwner();}
-function searchJobs(){let pin=document.getElementById('searchPincode').value;if(!pin){alert('Pincode टाका');return;}let res=document.getElementById('jobResults');res.innerHTML='';let filtered=vacancies.filter(v=>v.pincode==pin);if(filtered.length==0)res.innerHTML='<p class="text-sm text-gray-400">या Pincode वर Vacancy नाही</p>';filtered.forEach(v=>{let already=applications.find(a=>a.vacancyId==v.id&&a.empId==empProfile.id);res.innerHTML+=`<div class="border p-3 rounded-xl bg-white text-sm"><b>${v.shopName}</b> - ${v.post}<br>Salary: ₹${v.salary} | Pincode: ${v.pincode}<br><small>${v.desc}</small><br>${already?'<span class="text-green-600 font-bold">Applied ✅</span>':`<button onclick="applyJob(${v.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs mt-2">Apply करा</button>`}</div>`;});}
-function applyJob(vacId){let vac=vacancies.find(v=>v.id==vacId);let app={id:Date.now(),vacancyId:vacId,shopId:vac.shopId,post:vac.post,empId:empProfile.id,empName:empProfile.name,empMobile:empProfile.mobile,empSkill:empProfile.skill,pincode:empProfile.pincode,date:new Date().toLocaleString()};applications.push(app);localStorage.setItem('pd_applications_v4',JSON.stringify(applications));alert('Apply झालं!');searchJobs();renderMyApplications();}
-function renderMyApplications(){let el=document.getElementById('myApplications');if(!el)return;el.innerHTML='';applications.filter(a=>a.empId==empProfile?.id).forEach(a=>{let v=vacancies.find(vv=>vv.id==a.vacancyId);el.innerHTML+=`<div class="border p-2 rounded text-xs"><b>${v?.shopName||'Shop'} - ${a.post}</b><br>Status: Applied on ${a.date}</div>`;});}
-function hireEmp(empId){let empApp=applications.find(a=>a.empId==empId);if(employees.length>=9){alert('Max 9');return;}employees.push({id:empApp.empId,name:empApp.empName,mobile:empApp.empMobile,skill:empApp.empSkill});localStorage.setItem('pd_employees_v4',JSON.stringify(employees));alert(empApp.empName+' Hire झाला');}
-function addEmployeeToShop(){if(employees.length>=9){alert('Max 9');return;}let name=prompt('नाव');let mob=prompt('Mobile');if(!name||!mob)return;employees.push({id:Date.now(),name,mobile:mob});localStorage.setItem('pd_employees_v4',JSON.stringify(employees));renderEmployees();}
-function renderEmployees(){let el=document.getElementById('employeeList');if(!el)return;el.innerHTML='';employees.forEach(e=>{el.innerHTML+=`<div class="border p-2 rounded flex justify-between text-xs"><div><b>${e.name}</b> ${e.mobile}</div><div><button onclick="entryEmp(${e.id})" class="bg-green-500 text-white px-2 py-1 rounded text-[10px]">Entry</button><button onclick="exitEmp(${e.id})" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] ml-1">Exit</button></div></div>`;});let log=document.getElementById('attendanceLog');log.innerHTML='';attendance.slice(-10).reverse().forEach(a=>{log.innerHTML+=`<div>${a.name} Entry:${a.entry} Exit:${a.exit||'Working'}</div>`;});}
-function entryEmp(id){let emp=employees.find(e=>e.id==id);attendance.push({empId:id,name:emp.name,entry:new Date().toLocaleTimeString(),exit:null,date:new Date().toLocaleDateString()});localStorage.setItem('pd_attendance_v4',JSON.stringify(attendance));renderEmployees();}
-function exitEmp(id){let rec=attendance.filter(a=>a.empId==id).pop();if(rec){rec.exit=new Date().toLocaleTimeString();localStorage.setItem('pd_attendance_v4',JSON.stringify(attendance));renderEmployees();}}
-function empEntry(){document.getElementById('empSaleArea').classList.remove('hidden');alert('Entry झाली!');}
-function empExit(){document.getElementById('empSaleArea').classList.add('hidden');alert('Exit झाली!');}
-initRole();
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Dukandar v5 Cloud</title>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA70ZubztEs82g5aABM5TW5t5Hb__D2sOI",
+    authDomain: "pro-dukandar-2c4a0.firebaseapp.com",
+    projectId: "pro-dukandar-2c4a0",
+    storageBucket: "pro-dukandar-2c4a0.firebasestorage.app",
+    messagingSenderId: "404988689088",
+    appId: "1:404988689088:web:883ff97e7a4cf708cd0b25",
+    measurementId: "G-QV2G4E5MT0"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window.db = db; // global
+
+  // Owner: Vacancy Post Function
+  window.postVacancy = async function() {
+    const shop = document.getElementById('shopName').value;
+    const pin = document.getElementById('pincode').value;
+    const job = document.getElementById('jobRole').value;
+    const salary = document.getElementById('salary').value;
+    const phone = document.getElementById('phone').value;
+    
+    if(!shop || !pin) { alert('नाव आणि Pincode टाका'); return; }
+    
+    document.getElementById('postBtn').innerText = 'Posting...';
+    try {
+      await addDoc(collection(db, "vacancies"), {
+        shopName: shop,
+        pincode: pin.trim(),
+        jobRole: job,
+        salary: salary,
+        phone: phone,
+        createdAt: serverTimestamp()
+      });
+      alert('✅ Vacancy Cloud वर Post झाली! आता दुसऱ्या फोनवर दिसेल');
+      document.getElementById('postBtn').innerText = 'Post Vacancy';
+    } catch(e) { alert('Error: '+e.message); }
+  }
+
+  // Employee: Search Function - हाच तुमचा प्रॉब्लेम Solve करेल
+  window.searchJobs = async function() {
+    const pinSearch = document.getElementById('searchPin').value.trim();
+    const resultDiv = document.getElementById('results');
+    resultDiv.innerHTML = 'Searching Cloud वर...';
+    
+    const q = query(collection(db, "vacancies"), where("pincode", "==", pinSearch));
+    const snapshot = await getDocs(q);
+    
+    if(snapshot.empty) {
+      resultDiv.innerHTML = `<p style="color:red">या ${pinSearch} Pincode वर Vacancy नाही (Cloud वर पण नाही)</p>`;
+      return;
+    }
+    
+    let html = `<h3>${pinSearch} साठी ${snapshot.size} Vacancy सापडल्या:</h3>`;
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      html += `<div style="border:1px solid #ccc;padding:10px;margin:10px;border-radius:8px">
+        <b>🏪 ${d.shopName}</b> - ${d.jobRole}<br>
+        📍 Pincode: ${d.pincode} | 💰 ${d.salary}<br>
+        📞 ${d.phone}
+      </div>`;
+    });
+    resultDiv.innerHTML = html;
+  }
 </script>
+</head>
+<body style="font-family:Arial;padding:15px;max-width:500px;margin:auto">
+  <h2 style="text-align:center;color:#0b57d0">Pro Dukandar v5 Cloud ☁️</h2>
+  
+  <div style="background:#e8f0fe;padding:15px;border-radius:10px;margin-bottom:20px">
+    <h3>मालक - Vacancy टाका (Moraya)</h3>
+    <input id="shopName" placeholder="दुकानाचे नाव - Moraya" style="width:100%;padding:8px;margin:5px 0"><br>
+    <input id="pincode" placeholder="Pincode - 415523" value="415523" style="width:100%;padding:8px;margin:5px 0"><br>
+    <input id="jobRole" placeholder="काम - सेल्समन" style="width:100%;padding:8px;margin:5px 0"><br>
+    <input id="salary" placeholder="पगार - 12000" style="width:100%;padding:8px;margin:5px 0"><br>
+    <input id="phone" placeholder="फोन नंबर" style="width:100%;padding:8px;margin:5px 0"><br>
+    <button id="postBtn" onclick="postVacancy()" style="width:100%;padding:10px;background:#0b57d0;color:white;border:none;border-radius:5px">Cloud वर Post करा</button>
+  </div>
+
+  <div style="background:#fef7e0;padding:15px;border-radius:10px">
+    <h3>कर्मचारी - नोकरी शोधा (Sneha)</h3>
+    <input id="searchPin" placeholder="Pincode टाका - 415523" value="415523" style="width:100%;padding:8px;margin:5px 0"><br>
+    <button onclick="searchJobs()" style="width:100%;padding:10px;background:green;color:white;border:none;border-radius:5px">Search करा</button>
+    <div id="results" style="margin-top:15px"></div>
+  </div>
+
+  <p style="text-align:center;font-size:12px;margin-top:20px;color:gray">v5 Cloud | Project: pro-dukandar-2c4a0 | Firebase Live</p>
 </body>
 </html>
