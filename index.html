@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pro Dukandar v7 - Main App with GST</title>
+<title>Pro Dukandar v7.1 - Kharidi + Vikri + GST</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
@@ -22,101 +22,80 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 let cart=[]; let productsCache=[];
-
 window.addProduct = async function(){
   const name=document.getElementById('pName').value.trim();
-  const price=parseFloat(document.getElementById('pPrice').value);
+  const buyPrice=parseFloat(document.getElementById('pBuyPrice').value)||0;
+  const sellPrice=parseFloat(document.getElementById('pSellPrice').value)||0;
   const hsn=document.getElementById('pHsn').value.trim()||'0000';
   const gst=parseFloat(document.getElementById('pGst').value)||0;
-  if(!name||!price){alert('नाव आणि किंमत टाका');return;}
+  if(!name||!sellPrice){alert('नाव आणि विक्री किंमत टाका');return;}
   const btn=document.getElementById('addPBtn'); btn.innerText='Saving...';
   try{
-    await addDoc(collection(db,'products'),{name,price,hsn,gstPercent:gst,createdAt:serverTimestamp(),shopPin:document.getElementById('shopPinMain').value||'415523'});
-    alert('✅ Product Add - HSN '+hsn+' GST '+gst+'%'); loadProducts();
-  }catch(e){alert(e.message);} btn.innerText='Add Product Cloud वर';
+    const profit=sellPrice-buyPrice;
+    const profitPercent=buyPrice>0? (profit/buyPrice*100).toFixed(1):0;
+    await addDoc(collection(db,'products'),{name,buyPrice,sellPrice,price:sellPrice,profit,profitPercent,hsn,gstPercent:gst,createdAt:serverTimestamp(),shopPin:document.getElementById('shopPinMain').value||'415523'});
+    alert(`✅ Add झाला! खरेदी ₹${buyPrice} | विक्री ₹${sellPrice} | नफा ₹${profit}`);
+    loadProducts();
+  }catch(e){alert(e.message);} btn.innerText='Add Product (खरेदी+विक्री)';
 }
 window.loadProducts = async function(){
-  const q=query(collection(db,'products'),orderBy('createdAt','desc'),limit(50));
+  const q=query(collection(db,'products'),orderBy('createdAt','desc'),limit(100));
   const snap=await getDocs(q); productsCache=[]; let html='';
-  snap.forEach(d=>{ const p={id:d.id,...d.data()}; productsCache.push(p);
-    html+=`<div class='flex justify-between bg-white p-3 rounded-xl border mb-2'><div><b>${p.name}</b> - ₹${p.price} <span class='bg-yellow-100 text-xs px-2 rounded'>GST ${p.gstPercent}%</span> HSN ${p.hsn}</div><button onclick='addToCart("${p.id}")' class='bg-blue-600 text-white px-3 py-1 rounded-lg text-sm'>+ Bill</button></div>`;
+  snap.forEach(d=>{ const p={id:d.id,...d.data()};
+    productsCache.push(p);
+    const profit=p.profit||0;
+    html+=`<div class='flex justify-between bg-white p-3 rounded-xl border mb-2'><div><b>${p.name}</b> HSN ${p.hsn} GST ${p.gstPercent}%<br><span class='text-sm'><span class='bg-orange-100 px-2 rounded'>खरेदी ₹${p.buyPrice||0}</span> <span class='bg-green-100 px-2 rounded'>विक्री ₹${p.sellPrice}</span> <span class='bg-blue-100 px-2 rounded font-bold'>नफा ₹${profit}</span></span></div><button onclick='addToCart("${p.id}")' class='bg-blue-600 text-white px-3 py-1 rounded-lg'>+ Bill</button></div>`;
   });
   document.getElementById('productList').innerHTML=html||'Product नाही';
-  let opt='<option value="">Product निवडा</option>'; productsCache.forEach(p=>{opt+=`<option value="${p.id}">${p.name} ₹${p.price} (${p.gstPercent}%)</option>`});
-  const sel=document.getElementById('billProductSelect'); if(sel) sel.innerHTML=opt;
+  let opt='<option value="">Product निवडा</option>'; productsCache.forEach(p=>{opt+=`<option value="${p.id}">${p.name} - खरेदी ₹${p.buyPrice||0} | विक्री ₹${p.sellPrice} (नफा ₹${p.profit||0})</option>`});
+  document.getElementById('billProductSelect').innerHTML=opt;
 }
-window.addToCart=function(pid){ const p=productsCache.find(x=>x.id===pid); const ex=cart.find(c=>c.id===pid); if(ex) ex.qty++; else cart.push({...p,qty:1}); renderCart(); }
+window.addToCart=function(pid){ const p=productsCache.find(x=>x.id===pid); const ex=cart.find(c=>c.id===pid); if(ex) ex.qty++; else cart.push({...p,qty:1,billPrice:p.sellPrice}); renderCart(); }
 window.addToCartFromSelect=function(){ const pid=document.getElementById('billProductSelect').value; if(pid) addToCart(pid); }
 window.renderCart=function(){
-  let total=0,totalGst=0,html='';
+  let totalBase=0,totalGst=0,totalBuy=0,totalProfit=0,html='';
   cart.forEach((c,i)=>{
-    const base=c.price*c.qty; const gstAmt=base*c.gstPercent/100; total+=base; totalGst+=gstAmt;
-    html+=`<div class='flex justify-between bg-gray-50 p-2 rounded mb-1 text-sm'><span>${c.name} x${c.qty}</span><span>₹${base}+₹${gstAmt.toFixed(2)}=₹${(base+gstAmt).toFixed(2)} <button onclick='cart.splice(${i},1);renderCart()' class='text-red-600'>x</button></span></div>`;
+    const buy=c.buyPrice||0; const sell=c.billPrice||c.sellPrice; const base=sell*c.qty; const gstAmt=base*c.gstPercent/100; const profit=(sell-buy)*c.qty;
+    totalBase+=base; totalGst+=gstAmt; totalBuy+=buy*c.qty; totalProfit+=profit;
+    html+=`<div class='flex justify-between bg-gray-50 p-2 rounded mb-1 text-sm'><span>${c.name} x${c.qty}<br><span class='text-xs'>खरेदी ₹${buy} नफा ₹${profit.toFixed(0)}</span></span><span>₹${base}+GST ₹${gstAmt.toFixed(2)}<br><button onclick='cart.splice(${i},1);renderCart()' class='text-red-600'>x</button></span></div>`;
   });
   document.getElementById('cartItems').innerHTML=html||'Cart रिकामा';
-  document.getElementById('cartSummary').innerHTML=`<div class='bg-blue-50 p-3 rounded-xl mt-2 text-sm'><div class='flex justify-between'><span>Base:</span><b>₹${total.toFixed(2)}</b></div><div class='flex justify-between'><span>CGST+SGST:</span><span>₹${totalGst.toFixed(2)}</span></div><div class='flex justify-between font-bold border-t pt-1 text-base'><span>Grand Total:</span><span>₹${(total+totalGst).toFixed(2)}</span></div></div>`;
+  document.getElementById('cartSummary').innerHTML=`<div class='bg-blue-50 p-3 rounded-xl mt-2 text-sm'><div class='flex justify-between'><span>खरेदी:</span><span>₹${totalBuy.toFixed(2)}</span></div><div class='flex justify-between'><span>विक्री Base:</span><b>₹${totalBase.toFixed(2)}</b></div><div class='flex justify-between text-green-700 font-bold'><span>नफा:</span><span>₹${totalProfit.toFixed(2)}</span></div><div class='flex justify-between font-bold border-t'><span>Grand:</span><span>₹${(totalBase+totalGst).toFixed(2)}</span></div></div>`;
 }
 window.createBill=async function(){
   if(cart.length==0){alert('Cart रिकामा');return;}
-  let total=0,totalGst=0; const items=cart.map(c=>{const base=c.price*c.qty; const gstAmt=base*c.gstPercent/100; total+=base; totalGst+=gstAmt; return {name:c.name,hsn:c.hsn,price:c.price,qty:c.qty,gstPercent:c.gstPercent,base,gstAmt,total:base+gstAmt};});
-  const grand=total+totalGst; const cust=document.getElementById('custName').value||'Cash';
-  const pay=document.getElementById('payMode').value;
-  const btn=document.getElementById('billBtn'); btn.innerText='Saving...';
-  try{
-    const billData={customerName:cust,items,baseTotal:total,totalGst,cgst:totalGst/2,sgst:totalGst/2,grandTotal:grand,paymentMode:pay,createdAt:serverTimestamp(),shopPin:document.getElementById('shopPinMain').value};
-    const ref=await addDoc(collection(db,'bills'),billData);
-    alert('✅ Bill बनला ₹'+grand.toFixed(2)); generatePDF(billData,ref.id); loadBills(); cart=[]; renderCart();
-  }catch(e){alert(e.message);} btn.innerText='Bill बनवा + PDF';
-}
-window.generatePDF=function(billData,billId){
-  const {jsPDF}=window.jspdf; const doc=new jsPDF(); const shop=document.getElementById('shopNameMain').value; const gstin=document.getElementById('shopGstinMain').value;
-  doc.text(shop,10,15); doc.setFontSize(10); doc.text('GSTIN:'+gstin,10,22); doc.text('Cust:'+billData.customerName,10,28);
-  let y=36; billData.items.forEach(it=>{doc.text(`${it.name} HSN${it.hsn} Qty${it.qty} GST${it.gstPercent}% = ${it.total.toFixed(2)}`,10,y); y+=6;});
-  y+=5; doc.text(`Base ${billData.baseTotal.toFixed(2)} GST ${billData.totalGst.toFixed(2)} Grand ${billData.grandTotal.toFixed(2)}`,10,y);
-  doc.save(`Bill_${billId.slice(0,6)}.pdf`);
+  let totalBase=0,totalGst=0,totalBuy=0,totalProfit=0;
+  const items=cart.map(c=>{const buy=c.buyPrice||0; const sell=c.billPrice||c.sellPrice; const base=sell*c.qty; const gstAmt=base*c.gstPercent/100; const profit=(sell-buy)*c.qty; totalBase+=base; totalGst+=gstAmt; totalBuy+=buy*c.qty; totalProfit+=profit; return {name:c.name,hsn:c.hsn,buyPrice:buy,sellPrice:sell,qty:c.qty,gstPercent:c.gstPercent,base,gstAmt,profit,total:base+gstAmt};});
+  const billData={customerName:document.getElementById('custName').value||'Cash',items,baseTotal:totalBase,totalBuy,totalProfit,totalGst,cgst:totalGst/2,sgst:totalGst/2,grandTotal:totalBase+totalGst,paymentMode:document.getElementById('payMode').value,createdAt:serverTimestamp(),shopPin:document.getElementById('shopPinMain').value};
+  await addDoc(collection(db,'bills'),billData); alert(`Bill ₹${(totalBase+totalGst).toFixed(2)} नफा ₹${totalProfit.toFixed(2)}`); cart=[]; renderCart(); loadBills();
 }
 window.loadBills=async function(){
-  const q=query(collection(db,'bills'),orderBy('createdAt','desc'),limit(20)); const snap=await getDocs(q); let html='',sumGst=0,sumTot=0;
-  snap.forEach(d=>{const b=d.data(); sumGst+=b.totalGst||0; sumTot+=b.grandTotal||0; html+=`<div class='bg-white p-3 rounded-xl border mb-2 text-sm'><b>${b.customerName}</b> - ₹${b.grandTotal?.toFixed(2)} (GST ₹${b.totalGst?.toFixed(2)})</div>`;});
+  const q=query(collection(db,'bills'),orderBy('createdAt','desc'),limit(30)); const snap=await getDocs(q); let html='',sumGst=0,sumTot=0,sumProfit=0;
+  snap.forEach(d=>{const b=d.data(); sumGst+=b.totalGst||0; sumTot+=b.grandTotal||0; sumProfit+=b.totalProfit||0; html+=`<div class='bg-white p-3 rounded-xl border mb-2 text-sm'><b>${b.customerName}</b> Grand ₹${b.grandTotal?.toFixed(2)} नफा ₹${b.totalProfit?.toFixed(2)}</div>`;});
   document.getElementById('billsList').innerHTML=html||'Bill नाही';
-  document.getElementById('gstReport').innerHTML=`<div class='bg-gradient-to-r from-green-600 to-emerald-600 text-white p-4 rounded-2xl'><h3 class='font-bold'>GST Report (20 Bills)</h3><p>Total Sales ₹${sumTot.toFixed(2)}</p><p>Total GST ₹${sumGst.toFixed(2)} (CGST ${(sumGst/2).toFixed(2)}+SGST ${(sumGst/2).toFixed(2)})</p></div>`;
+  document.getElementById('gstReport').innerHTML=`<div class='bg-green-600 text-white p-4 rounded-2xl'><p>Sales ₹${sumTot.toFixed(2)} | Profit ₹${sumProfit.toFixed(2)} | GST ₹${sumGst.toFixed(2)}</p></div>`;
 }
-window.postVacancy=async function(){
-  const shop=document.getElementById('shopNameMain').value; const pin=document.getElementById('shopPinMain').value; const role=document.getElementById('vacRole').value; const sal=document.getElementById('vacSal').value; const phone=document.getElementById('vacPhone').value;
-  await addDoc(collection(db,'vacancies'),{shopName:shop,pincode:pin,jobRole:role,salary:sal,phone,createdAt:serverTimestamp()}); alert('Vacancy Live!'); loadVacancies();
-}
-window.loadVacancies=async function(){
-  const pin=document.getElementById('shopPinMain').value||'415523'; const q=query(collection(db,'vacancies'),where('pincode','==',pin)); const snap=await getDocs(q);
-  let html=`${pin} - ${snap.size} Vacancy<br>`; snap.forEach(d=>{const v=d.data(); html+=`<div class='bg-white p-3 rounded-xl border mb-2'>${v.shopName} - ${v.jobRole} ₹${v.salary} <a href='tel:${v.phone}' class='text-green-700'>${v.phone}</a></div>`;});
-  document.getElementById('vacList').innerHTML=html;
-}
-window.switchTab=function(tab){
-  document.querySelectorAll('.tabContent').forEach(el=>el.classList.add('hidden')); document.getElementById('tab-'+tab).classList.remove('hidden');
-  document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('bg-blue-600','text-white')); document.getElementById('btn-'+tab).classList.add('bg-blue-600','text-white');
-  if(tab==='products') loadProducts(); if(tab==='bills'||tab==='gst') loadBills(); if(tab==='vacancy') loadVacancies();
-}
-window.addEventListener('load',()=>{loadProducts(); loadBills(); switchTab('billing');});
+window.switchTab=function(tab){ document.querySelectorAll('.tabContent').forEach(el=>el.classList.add('hidden')); document.getElementById('tab-'+tab).classList.remove('hidden'); document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('bg-blue-600','text-white')); document.getElementById('btn-'+tab).classList.add('bg-blue-600','text-white'); if(tab==='products') loadProducts(); if(tab==='bills'||tab==='gst') loadBills(); }
+window.addEventListener('load',()=>{loadProducts(); switchTab('products');});
 </script>
 </head>
 <body class="bg-gray-100">
 <header class="bg-white shadow sticky top-0 z-20">
-  <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between"><h1 class="font-bold text-blue-700 text-xl">🛍️ Pro Dukandar v7 MAIN+GST</h1><span class="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">Cloud LIVE</span></div>
+  <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between"><h1 class="font-bold text-blue-700 text-xl">🛍️ Pro Dukandar v7.1</h1><span class="bg-green-600 text-white text-xs px-3 py-1 rounded-full">Kharidi+Vikri LIVE</span></div>
   <div class="max-w-5xl mx-auto px-2 pb-2 flex gap-2 overflow-x-auto">
-    <button id="btn-billing" onclick="switchTab('billing')" class="tabBtn bg-blue-600 text-white px-4 py-2 rounded-full text-sm">🧾 Billing</button>
-    <button id="btn-products" onclick="switchTab('products')" class="tabBtn bg-white border px-4 py-2 rounded-full text-sm">📦 Products</button>
+    <button id="btn-products" onclick="switchTab('products')" class="tabBtn bg-blue-600 text-white px-4 py-2 rounded-full text-sm">📦 Products + Kharidi</button>
+    <button id="btn-billing" onclick="switchTab('billing')" class="tabBtn bg-white border px-4 py-2 rounded-full text-sm">🧾 Billing</button>
     <button id="btn-bills" onclick="switchTab('bills')" class="tabBtn bg-white border px-4 py-2 rounded-full text-sm">📜 Bills</button>
-    <button id="btn-gst" onclick="switchTab('gst')" class="tabBtn bg-white border px-4 py-2 rounded-full text-sm">📊 GST Report</button>
-    <button id="btn-vacancy" onclick="switchTab('vacancy')" class="tabBtn bg-white border px-4 py-2 rounded-full text-sm">💼 Vacancy</button>
+    <button id="btn-gst" onclick="switchTab('gst')" class="tabBtn bg-white border px-4 py-2 rounded-full text-sm">📊 Report</button>
     <button id="btn-settings" onclick="switchTab('settings')" class="tabBtn bg-white border px-4 py-2 rounded-full text-sm">⚙️ Settings</button>
   </div>
 </header>
 <main class="max-w-5xl mx-auto p-4">
-  <div id="tab-settings" class="tabContent hidden"><div class="bg-white p-5 rounded-2xl shadow"><h3 class="font-bold mb-3">Store + GST Settings</h3><div class="grid md:grid-cols-2 gap-2"><input id="shopNameMain" value="Moraya Enterprises" class="p-3 border rounded-xl"><input id="shopPinMain" value="415523" class="p-3 border rounded-xl"><input id="shopGstinMain" value="27ABCDE1234F1Z5" class="p-3 border rounded-xl"><select class="p-3 border rounded-xl"><option>GST On</option><option>GST Off - Basic 69</option></select></div></div></div>
-  <div id="tab-products" class="tabContent hidden"><div class="bg-white p-5 rounded-2xl shadow mb-4"><h3 class="font-bold mb-3">Product Add - HSN+GST</h3><div class="grid md:grid-cols-5 gap-2"><input id="pName" placeholder="साखर" class="p-3 border rounded-xl"><input id="pPrice" type="number" placeholder="Price" class="p-3 border rounded-xl"><input id="pHsn" placeholder="HSN 1701" class="p-3 border rounded-xl"><select id="pGst" class="p-3 border rounded-xl"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option></select><input id="pStock" placeholder="Stock" class="p-3 border rounded-xl"></div><button id="addPBtn" onclick="addProduct()" class="mt-3 w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Add Product</button></div><div id="productList"></div></div>
-  <div id="tab-billing" class="tabContent"><div class="grid md:grid-cols-2 gap-4"><div class="bg-white p-5 rounded-2xl shadow"><h3 class="font-bold mb-3">Smart Billing - GST Auto</h3><div class="flex gap-2 mb-3"><select id="billProductSelect" class="flex-1 p-3 border rounded-xl"></select><button onclick="addToCartFromSelect()" class="bg-blue-600 text-white px-4 rounded-xl">+ Add</button></div><div class="grid grid-cols-2 gap-2 mb-3"><input id="custName" placeholder="Customer" class="p-3 border rounded-xl"><input id="custGstin" placeholder="Cust GSTIN" class="p-3 border rounded-xl"></div><select id="payMode" class="w-full p-3 border rounded-xl mb-3"><option>Cash</option><option>UPI</option><option>उधार</option></select><div id="cartItems"></div><div id="cartSummary"></div><div class="flex gap-2 mt-4"><button onclick="cart=[];renderCart()" class="flex-1 border py-3 rounded-xl">Clear</button><button id="billBtn" onclick="createBill()" class="flex-[2] bg-green-600 text-white py-3 rounded-xl font-bold">Bill + PDF</button></div></div><div class="bg-blue-50 p-5 rounded-2xl"><h4 class="font-bold">Example: GST Bill</h4><div class="bg-white p-3 rounded-xl mt-3 text-sm font-mono">साखर 50 + 5% 2.50 = 52.50<br>कव्हर 200 + 18% 36 = 236<br>Grand 288.50 (CGST 19.25+SGST 19.25)</div></div></div></div>
+  <div id="tab-products" class="tabContent"><div class="bg-white p-5 rounded-2xl shadow mb-4 border-2 border-blue-100"><h3 class="font-bold mb-3">📦 Product - खरेदी + विक्री + GST</h3><div class="grid grid-cols-2 md:grid-cols-6 gap-2"><input id="pName" placeholder="साखर" class="p-3 border rounded-xl"><input id="pBuyPrice" placeholder="खरेदी 40" class="p-3 border-2 border-orange-300 rounded-xl bg-orange-50 font-bold" type="number"><input id="pSellPrice" placeholder="विक्री 50" class="p-3 border-2 border-green-300 rounded-xl bg-green-50 font-bold" type="number"><input id="pHsn" placeholder="HSN 1701" class="p-3 border rounded-xl"><select id="pGst" class="p-3 border rounded-xl"><option value="0">0%</option><option value="5" selected>5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select><input id="pStock" placeholder="Stock" class="p-3 border rounded-xl"></div><button id="addPBtn" onclick="addProduct()" class="mt-3 w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Add Product (खरेदी+विक्री) ☁️</button></div><div id="productList"></div></div>
+  <div id="tab-billing" class="tabContent hidden"><div class="bg-white p-5 rounded-2xl shadow"><h3 class="font-bold mb-3">Billing - नफा + GST</h3><div class="flex gap-2 mb-3"><select id="billProductSelect" class="flex-1 p-3 border rounded-xl"></select><button onclick="addToCartFromSelect()" class="bg-blue-600 text-white px-4 rounded-xl">+ Add</button></div><input id="custName" placeholder="Customer" class="w-full p-3 border rounded-xl mb-2"><select id="payMode" class="w-full p-3 border rounded-xl mb-3"><option>Cash</option><option>UPI</option><option>उधार</option></select><div id="cartItems"></div><div id="cartSummary"></div><button id="billBtn" onclick="createBill()" class="mt-4 w-full bg-green-600 text-white py-3 rounded-xl font-bold">Bill बनवा</button></div></div>
   <div id="tab-bills" class="tabContent hidden"><div id="billsList"></div></div>
   <div id="tab-gst" class="tabContent hidden"><div id="gstReport"></div></div>
-  <div id="tab-vacancy" class="tabContent hidden"><div class="bg-white p-5 rounded-2xl shadow mb-4"><h3 class="font-bold mb-3">Vacancy (v6 Cloud)</h3><div class="grid md:grid-cols-2 gap-2"><input id="vacShop" placeholder="दुकान" class="p-3 border rounded-xl"><input id="vacRole" placeholder="Role" class="p-3 border rounded-xl"><input id="vacSal" placeholder="Salary" class="p-3 border rounded-xl"><input id="vacPhone" placeholder="Phone" class="p-3 border rounded-xl"></div><button onclick="postVacancy()" class="mt-3 w-full bg-blue-600 text-white py-3 rounded-xl">Post Vacancy</button></div><div id="vacList"></div></div>
+  <div id="tab-settings" class="tabContent hidden"><div class="bg-white p-5 rounded-2xl shadow"><h3 class="font-bold">Settings</h3><div class="grid grid-cols-3 gap-2 mt-2"><input id="shopNameMain" value="Moraya Enterprises" class="p-3 border rounded-xl"><input id="shopPinMain" value="415523" class="p-3 border rounded-xl"><input id="shopGstinMain" value="27ABCDE1234F1Z5" class="p-3 border rounded-xl"></div></div></div>
 </main>
 </body>
 </html>
